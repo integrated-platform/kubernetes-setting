@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-nginx
+  labels:
+    app: react-nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: react-nginx
+  template:
+    metadata:
+      labels:
+        app: react-nginx
+    spec:
+      containers:
+        - name: react-nginx
+          image: daev681/daev681:react-nginx
+          imagePullPolicy: Always  # 강제로 이미지 다운로드
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_GATEWAY
+              value: "api-gateway-service"
+            - name: API_GATEWAY_PORT
+              value: "5000"
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf   # nginx.conf 파일을 마운트할 경로
+              subPath: nginx.conf                # ConfigMap에서의 파일 이름
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config               # ConfigMap 이름 (nginx.conf가 포함된)
+      imagePullSecrets:
+        - name: my-secret  # 시크릿 이름을 여기에 지정

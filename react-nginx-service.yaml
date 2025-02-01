@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: react-nginx-service
+spec:
+  selector:
+    app: react-nginx
+  ports:
+    - protocol: TCP
+      port: 80      # 외부에 노출할 포트
+      targetPort: 80 # 컨테이너의 포트
+      nodePort: 30000  # 노드의 외부 포트 (선택 사항, 기본적으로는 자동 할당됨)
+  type: NodePort      # 노드포트로 설정
+

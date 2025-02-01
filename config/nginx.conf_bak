@@ -1,0 +1,55 @@
+user nginx;
+worker_processes auto;
+
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    gzip on;
+
+    server {
+        listen 80;
+        server_name www.daev681.store;
+        root /usr/share/nginx/html;  # 여기서 경로를 /usr/share/nginx/html로 설정
+        index index.html index.htm;
+
+
+        # React 앱을 서빙하는 기본 경로
+        location / {
+    		try_files $uri $uri/ /index.html;
+        }
+
+        # / 이외의 모든 경로에 대해 동적으로 서비스로 요청 전달
+        location ~ ^/([a-zA-Z0-9_-]+)$ {
+            set $service $1;  # URL 경로에서 첫 번째 경로 부분 추출
+
+            proxy_pass http://api-gateway-service;  # 동적으로 서비스로 프록시
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+
+        # 정적 자원 (favicon, css, js 등) 캐싱 설정
+        location ~* \.(?:ico|css|js|woff2?|eot|ttf|otf|svg|png|jpg|jpeg|gif)$ {
+            expires 6M;
+            access_log off;
+            add_header Cache-Control "public";
+        }
+    }
+}
+
